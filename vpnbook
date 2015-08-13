@@ -1,0 +1,102 @@
+#!/bin/sh
+
+vpnbook_folder=/home/User/.vpnbook
+vpnbook_url=http://www.vpnbook.com/freevpn
+interactive=1
+
+# Start functions  
+# Print out the menu
+show_menu(){
+    NORMAL=`echo "\033[m"`
+    MENU=`echo "\033[36m"` #Blue
+    NUMBER=`echo "\033[33m"` #yellow
+    FGRED=`echo "\033[41m"`
+    RED_TEXT=`echo "\033[31m"`
+    ENTER_LINE=`echo "\033[33m"`
+    echo -e "${MENU}*********************************************${NORMAL}"
+    echo -e "${MENU}**${NUMBER} 1)${MENU} Connect to Euro1 ${NORMAL}"
+    echo -e "${MENU}**${NUMBER} 2)${MENU} Connect to Euro2 ${NORMAL}"
+    echo -e "${MENU}**${NUMBER} 3)${MENU} Connect to UK1 ${NORMAL}"
+    echo -e "${MENU}**${NUMBER} 4)${MENU} Connect to US1 ${NORMAL}"
+    echo -e "${MENU}*********************************************${NORMAL}"
+    echo -e "${ENTER_LINE}Press ${RED_TEXT}any other key to exit. ${NORMAL}"
+}
+
+# Print out the help
+usage(){
+    echo "usage: vpnbook [[[-s server ] [-i]] | [-h]]"
+	echo "server can be {EURO1, EURO2, UK1, US1}"
+	echo "if no parameter is set the interactive mode is started."
+}
+# End functions 
+
+# Start Script
+# Not necessary
+#curl -O http://www.vpnbook.com/free-openvpn-account/VPNBook.com-OpenVPN-US1.zip
+#unzip VPNBook.com-OpenVPN-US1.zip
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -s | --server )         shift
+                                server=$1
+                                interactive=0
+                                ;;
+        -i | --interactive )    interactive=1
+                                ;;
+        -h | --help )           usage
+                                exit
+                                ;;
+        * )                     usage
+                                exit 1
+    esac
+    shift
+done
+
+echo "Retrieving Password from server"
+
+# Retrieve the Password from the official webpage
+pwd=$(curl -s ${vpnbook_url} | grep Password | tr -d ' ' | head -n 1 | cut -d '>' -f 3 | cut -d ':' -f 2 | cut -d '<' -f 1)
+
+if [ "${pwd}" == "" ] 
+then
+	echo "Password not retrieved from server"
+	echo "Exiting"
+	exit 
+else
+	echo "Password retrieved from server: " ${pwd}
+	# Check if the a file with Username and Password exists, if so, delete it.
+	if [ -f ${vpnbook_folder}/login.conf ]
+	then
+		rm ${vpnbook_folder}/login.conf
+	fi
+
+	# Create a new file to store Username and Password
+	echo "vpnbook" >> ${vpnbook_folder}/login.conf
+	echo $pwd >> ${vpnbook_folder}/login.conf
+
+	# Test code to verify command line processing
+	if [ ${interactive} = "1" ]; then
+		show_menu
+		read opt
+		
+		case $opt in
+		1) var=EURO1;;
+		2) var=EURO2;;
+		3) var=US1;;
+		4) var=US2;;
+		5) var=CA1;;
+		*) echo "Exit"; exit;;
+		esac
+	else
+		var=${server}
+	fi
+
+	# Make the original variable lowercase
+	l_var=$(echo $var | tr '[:upper:]' '[:lower:]')
+	echo "Starting the Vpn Tunnel"
+	# Start the connection
+	sudo openvpn --config ${vpnbook_folder}/${var}/vpnbook-${l_var}-tcp443.ovpn --auth-user-pass ${vpnbook_folder}/login.conf > /tmp/vpnbook.log &
+	echo "Vpn Tunnel established"
+	#End Script
+	exit 0
+fi
