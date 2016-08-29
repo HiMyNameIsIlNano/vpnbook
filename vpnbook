@@ -16,9 +16,10 @@ show_menu(){
     echo -e "${MENU}*********************************************${NORMAL}"
     echo -e "${MENU}**${NUMBER} 1)${MENU} Connect to Euro1 ${NORMAL}"
     echo -e "${MENU}**${NUMBER} 2)${MENU} Connect to Euro2 ${NORMAL}"
-    echo -e "${MENU}**${NUMBER} 3)${MENU} Connect to UK1 ${NORMAL}"
-    echo -e "${MENU}**${NUMBER} 4)${MENU} Connect to US1 ${NORMAL}"
-    echo -e "${MENU}**${NUMBER} 5)${MENU} Connect to DE ${NORMAL}"
+    echo -e "${MENU}**${NUMBER} 3)${MENU} Connect to US1 ${NORMAL}"
+    echo -e "${MENU}**${NUMBER} 4)${MENU} Connect to US2 ${NORMAL}"
+    echo -e "${MENU}**${NUMBER} 5)${MENU} Connect to CA1 ${NORMAL}" 
+    echo -e "${MENU}**${NUMBER} 6)${MENU} Connect to DE1 ${NORMAL}"
     echo -e "${MENU}*********************************************${NORMAL}"
     echo -e "${ENTER_LINE}Press ${RED_TEXT}any other key to exit. ${NORMAL}"
 }
@@ -26,16 +27,28 @@ show_menu(){
 # Print out the help
 usage(){
     echo "usage: vpnbook [[[-s server ] [-i]] | [-h]]"
-	echo "server can be {EURO1, EURO2, UK1, US1, DE}"
+	echo "server can be {EURO1, EURO2, UK1, US1, DE1}"
 	echo "if no parameter is set the interactive mode is started."
+}
+
+
+zip_downloader(){
+	base_name=VPNBook.com-OpenVPN
+	country=$1 	
+	ext=zip
+
+	if [ ! -f ${vpnbook_folder}/${base_name}-${country}.${ext} ]; then
+		echo "Downloading" ${base_name}-${country}.${ext}	    	
+		curl http://www.vpnbook.com/free-openvpn-account/${base_name}-${country}.${ext} -o ${vpnbook_folder}/${base_name}-${country}.${ext} 
+		mkdir -p ${vpnbook_folder}/${base_name}-${country}
+		# Make the original variable uppercase			
+		u_country=$(echo $country | tr '[:lower:]' '[:upper:]')		
+		unzip ${vpnbook_folder}/${base_name}-${country}.${ext} -d ${vpnbook_folder}/${u_country}	
+	fi
 }
 # End functions 
 
 # Start Script
-# Not necessary
-#curl -O http://www.vpnbook.com/free-openvpn-account/VPNBook.com-OpenVPN-US1.zip
-#unzip VPNBook.com-OpenVPN-US1.zip
-
 while [ "$1" != "" ]; do
     case $1 in
         -s | --server )         shift
@@ -64,14 +77,21 @@ then
 	echo "Exiting"
 	exit 
 else
+	mkdir -p ${vpnbook_folder} 	
+	
+	for i in Euro1 Euro2 US1 US2 CA1 DE1
+	do
+		zip_downloader ${i}
+	done
+	 	
 	echo "Password retrieved from server: " ${pwd}
-	# Check if the a file with Username and Password exists, if so, delete it.
+	# Check if the file with Username and Password exists, if so, delete it.
 	if [ -f ${vpnbook_folder}/login.conf ]
 	then
 		rm ${vpnbook_folder}/login.conf
 	fi
 
-	# Create a new file to store Username and Password
+	# Create a new file to store the Username and Password
 	echo "vpnbook" >> ${vpnbook_folder}/login.conf
 	echo $pwd >> ${vpnbook_folder}/login.conf
 
@@ -86,19 +106,27 @@ else
 		3) var=US1;;
 		4) var=US2;;
 		5) var=CA1;;
-		6) var=DE;;
+		6) var=DE1;;
 		*) echo "Exit"; exit;;
 		esac
 	else
 		var=${server}
 	fi
 
-	# Make the original variable lowercase
-	l_var=$(echo $var | tr '[:upper:]' '[:lower:]')
+	if [ ! $opt -eq 6 ]; then
+		# Make the original variable lowercase
+		l_var=$(echo $var | tr '[:upper:]' '[:lower:]')
+	else
+		l_var=de233
+	fi
+	
 	echo "Starting the Vpn Tunnel"
+	# Login to sudo	
+	sudo -v
 	# Start the connection
 	sudo openvpn --config ${vpnbook_folder}/${var}/vpnbook-${l_var}-tcp443.ovpn --auth-user-pass ${vpnbook_folder}/login.conf > /tmp/vpnbook.log &
-	echo "Vpn Tunnel established"
+	echo "Vpn Tunnel established"	
 	#End Script
 	exit 0
 fi
+
