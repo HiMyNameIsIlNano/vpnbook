@@ -26,4 +26,4 @@ cp vpnbook ${default_dir}
 
 echo "In order to work, the User: $USER must be part of a group called vpnstarter. Add the following lines to your sudoers configuration file..."
 echo '## Members of the Group vpnstarter can run openvpn'
-echo '%installer ALL=(ALL) PASSWD: /usr/local/sbin/openvpn'
+echo '%vpnstarter ALL=(ALL) PASSWD: /usr/local/sbin/openvpn'
