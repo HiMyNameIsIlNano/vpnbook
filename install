@@ -2,7 +2,7 @@
 
 is_installed(){
 	if ! [ -x "$(command -v $1)" ]; then
-	  echo 'Error: $1 is not installed.' >&2
+	  echo "Error: $1 is not installed." >&2
 	  exit 1
 	fi
 }
@@ -23,3 +23,5 @@ mkdir -p ${default_dir}
 
 echo "Copying Script under ${HOME}/.local/scripts..."
 cp vpnbook ${default_dir}
+
+echo "In order to work, the User: $USER must be part of a group called vpnstarter."
