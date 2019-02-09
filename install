@@ -1,0 +1,25 @@
+#!/bin/sh
+
+is_installed(){
+	if ! [ -x "$(command -v $1)" ]; then
+	  echo 'Error: $1 is not installed.' >&2
+	  exit 1
+	fi
+}
+
+check_requirements(){
+	# Check if sudo, curl tesseract, ImageMagick and openvpn are installed
+	is_installed sudo
+	is_installed curl
+	is_installed tesseract
+	is_installed mogrify
+	is_installed openvpn
+}
+
+check_requirements
+
+default_dir=${HOME}/.local/scripts
+mkdir -p ${default_dir}
+
+echo "Copying Script under ${HOME}/.local/scripts..."
+cp vpnbook ${default_dir}

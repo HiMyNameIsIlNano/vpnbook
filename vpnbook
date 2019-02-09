@@ -49,6 +49,16 @@ zip_downloader(){
 	fi
 }
 
+is_user_allowed_to_vpn(){
+	group=$(id -G -n $USER | grep -o "vpnstarter")
+	if [ "${group}" == "vpnstarter" ]; then
+		echo "The user is part of the vpnstarter Group"
+	else
+		echo "The user is not part of the vpnstarter Group. Please Fix the issue first and then retry."
+		exit 1
+	fi
+}
+
 is_installed(){
 	if ! [ -x "$(command -v $1)" ]; then
 	  echo 'Error: $1 is not installed.' >&2
@@ -63,6 +73,7 @@ check_requirements(){
 	is_installed tesseract
 	is_installed mogrify
 	is_installed openvpn
+	is_user_allowed_to_vpn
 }
 # End functions 
 
@@ -141,10 +152,8 @@ else
 		var=${server}
 	fi
 
-	if [ ! $opt -eq 6 ]; then
-		# Make the original variable lowercase
-		l_var=$(echo $var | tr '[:upper:]' '[:lower:]')
-	fi
+	# Make the original variable lowercase
+	l_var=$(echo $var | tr '[:upper:]' '[:lower:]')
 	
 	echo "Starting the Vpn Tunnel"
 	# Login to sudo	
@@ -160,9 +169,9 @@ else
 		exit_code=1
 	fi
 
-	#End Script
 	echo "Cleaning temporary Files..."
 	rm /tmp/password-${timestamp}.php /tmp/password-${timestamp}.png /tmp/password-${timestamp}.txt
+	
+	# End Script
 	exit ${exit_code}
 fi
-
