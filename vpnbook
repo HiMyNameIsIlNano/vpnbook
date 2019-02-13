@@ -1,6 +1,6 @@
 #!/bin/sh
 
-vpnbook_folder=/home/$(whoami)/.vpnbook
+vpnbook_folder=$HOME/.vpnbook
 vpnbook_base_url=https://www.vpnbook.com
 vpnbook_url=${vpnbook_base_url}/freevpn
 interactive=1
@@ -41,11 +41,11 @@ zip_downloader(){
 
 	if [ ! -f ${vpnbook_folder}/${base_name}-${country}.${ext} ]; then
 		echo "Downloading" ${base_name}-${country}.${ext}	    	
-		curl http://www.vpnbook.com/free-openvpn-account/${base_name}-${country}.${ext} -o ${vpnbook_folder}/${base_name}-${country}.${ext} 
-		mkdir -p ${vpnbook_folder}/${base_name}-${country}
+		curl ${vpnbook_base_url}/free-openvpn-account/${base_name}-${country}.${ext} -o ${vpnbook_folder}/${base_name}-${country}.${ext} 
 		# Make the original variable uppercase			
 		u_country=$(echo $country | tr '[:lower:]' '[:upper:]')		
 		unzip ${vpnbook_folder}/${base_name}-${country}.${ext} -d ${vpnbook_folder}/${u_country}	
+		mv ${vpnbook_folder}/${base_name}-${country}.${ext} ${vpnbook_folder}/${u_country}
 	fi
 }
 
