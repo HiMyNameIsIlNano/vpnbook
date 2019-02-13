@@ -35,9 +35,9 @@ usage(){
 }
 
 zip_downloader(){
-	base_name=VPNBook.com-OpenVPN
-	country=$1 	
-	ext=zip
+	local base_name=VPNBook.com-OpenVPN
+	local country=$1 	
+	local ext=zip
 
 	if [ ! -f ${vpnbook_folder}/${base_name}-${country}.${ext} ]; then
 		echo "Downloading" ${base_name}-${country}.${ext}	    	
@@ -50,7 +50,7 @@ zip_downloader(){
 }
 
 is_user_allowed_to_vpn(){
-	group=$(id -G -n $USER | grep -o "vpnstarter")
+	local group=$(id -G -n $USER | grep -o "vpnstarter")
 	if [ "${group}" == "vpnstarter" ]; then
 		echo "The user is part of the vpnstarter Group"
 	else
@@ -74,6 +74,60 @@ check_requirements(){
 	is_installed mogrify
 	is_installed openvpn
 	is_user_allowed_to_vpn
+}
+
+connect_to() {
+	local server = "$1"
+	local l_server=$(echo ${server} | tr '[:upper:]' '[:lower:]')
+	
+	if [ -f ${vpnbook_folder}/${l_server}/vpnbook-${server}-tcp443.ovpn ]
+	then
+		echo "Trying to Establish the Vpn Tunnel to ${i}..."
+		sudo openvpn --config ${vpnbook_folder}/${l_server}/vpnbook-${server}-tcp443.ovpn --auth-user-pass ${vpnbook_folder}/login.conf > /tmp/vpnbook.log &
+		return 0
+	else 
+		echo "${vpnbook_folder}/${l_server}/vpnbook-${server}-tcp443.ovpn was not found..."
+		return 1
+	fi
+}
+
+connect_to_first_available(){	 
+	local server =$1
+	local OPENVPN_EXIT_STATUS
+	
+	if [ "${server}" != "" ]
+	then
+		# Make the original variable lowercase
+		local l_server=$(echo ${server} | tr '[:upper:]' '[:lower:]')	
+		
+		echo "Trying to Establish the Vpn Tunnel to ${server}..."
+		connect_to ${server}
+		OPENVPN_EXIT_STATUS=$?
+		
+		if [ ${OPENVPN_EXIT_STATUS} -eq 0  ]; then
+			echo "Vpn Tunnel established"
+			return  0
+		else
+			echo "Trying to connect to another server..."
+			# If the connection was unsuccesful, then try to connect to the first available Server
+			for i in PL226 DE4 US1 US2 CA222 FR1
+			do
+				# Just skip a reconnection to the same Server given as input
+				if [ "${i}" != ${server} ]
+				then
+					connect_to ${i}
+					OPENVPN_EXIT_STATUS=$?
+					if [ ${OPENVPN_EXIT_STATUS} -eq 0  ]; then
+						return 0
+					fi
+				fi
+			done
+		fi
+		return 1
+	else 
+		echo "Method called with an empty input parameter..."
+		return 1
+	fi
 }
 # End functions 
 
@@ -154,14 +208,12 @@ else
 		var=${server}
 	fi
 
-	# Make the original variable lowercase
-	l_var=$(echo $var | tr '[:upper:]' '[:lower:]')
-	
 	echo "Starting the Vpn Tunnel"
 	# Login to sudo	
 	sudo -v
-	# Start the connection
-	sudo openvpn --config ${vpnbook_folder}/${var}/vpnbook-${l_var}-tcp443.ovpn --auth-user-pass ${vpnbook_folder}/login.conf > /tmp/vpnbook.log	
+	
+	# Start the connection and if whatever error occurs, then connect to the first available server
+	connect_to_first_available ${var}
 	OPENVPN_EXIT_STATUS=$?
 	
 	if [ ${OPENVPN_EXIT_STATUS} -eq 0  ]; then
