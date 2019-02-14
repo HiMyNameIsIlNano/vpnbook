@@ -38,12 +38,12 @@ zip_downloader(){
 	local base_name=VPNBook.com-OpenVPN
 	local country=$1 	
 	local ext=zip
+	local u_country=$(echo $country | tr '[:lower:]' '[:upper:]')
 
-	if [ ! -f ${vpnbook_folder}/${base_name}-${country}.${ext} ]; then
+	if [ ! -f ${vpnbook_folder}/${u_country}/${base_name}-${country}.${ext} ]; then
 		echo "Downloading" ${base_name}-${country}.${ext}	    	
 		curl ${vpnbook_base_url}/free-openvpn-account/${base_name}-${country}.${ext} -o ${vpnbook_folder}/${base_name}-${country}.${ext} 
-		# Make the original variable uppercase			
-		u_country=$(echo $country | tr '[:lower:]' '[:upper:]')		
+		# Make the original variable uppercase					
 		unzip ${vpnbook_folder}/${base_name}-${country}.${ext} -d ${vpnbook_folder}/${u_country}	
 		mv ${vpnbook_folder}/${base_name}-${country}.${ext} ${vpnbook_folder}/${u_country}
 	fi
