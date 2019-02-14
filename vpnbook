@@ -80,13 +80,13 @@ connect_to() {
 	local server=$1
 	local l_server=$(echo ${server} | tr '[:upper:]' '[:lower:]')
 	
-	if [ -f ${vpnbook_folder}/${l_server}/vpnbook-${server}-tcp443.ovpn ]
+	if [ -f ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn ]
 	then
 		echo "Trying to Establish the Vpn Tunnel to ${i}..."
-		sudo openvpn --config ${vpnbook_folder}/${l_server}/vpnbook-${server}-tcp443.ovpn --auth-user-pass ${vpnbook_folder}/login.conf > /tmp/vpnbook.log &
+		sudo openvpn --config ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn --auth-user-pass ${vpnbook_folder}/login.conf > /tmp/vpnbook.log &
 		return 0
 	else 
-		echo "${vpnbook_folder}/${l_server}/vpnbook-${server}-tcp443.ovpn was not found..."
+		echo "${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn was not found..."
 		return 1
 	fi
 }
