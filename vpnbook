@@ -77,7 +77,7 @@ check_requirements(){
 }
 
 connect_to() {
-	local server = "$1"
+	local server=$1
 	local l_server=$(echo ${server} | tr '[:upper:]' '[:lower:]')
 	
 	if [ -f ${vpnbook_folder}/${l_server}/vpnbook-${server}-tcp443.ovpn ]
@@ -92,7 +92,7 @@ connect_to() {
 }
 
 connect_to_first_available(){	 
-	local server =$1
+	local server=$1
 	local OPENVPN_EXIT_STATUS
 	
 	if [ "${server}" != "" ]
@@ -113,7 +113,7 @@ connect_to_first_available(){
 			for i in PL226 DE4 US1 US2 CA222 FR1
 			do
 				# Just skip a reconnection to the same Server given as input
-				if [ "${i}" != ${server} ]
+				if [ "${i}" != "${server}" ]
 				then
 					connect_to ${i}
 					OPENVPN_EXIT_STATUS=$?
