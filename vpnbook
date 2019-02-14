@@ -163,7 +163,7 @@ convertformat /tmp/password-${timestamp}.php /tmp/password-${timestamp}.png
 mogrify -resize 800% /tmp/password-${timestamp}.png
 
 # Tesseract appends the suffix ".txt" automatically at the end of the output filename 
-tesseract /tmp/password-${timestamp}.png /tmp/password-${timestamp}
+tesseract /tmp/password-${timestamp}.png /tmp/password-${timestamp} -psm 13
 pwd=$(cat /tmp/password-${timestamp}.txt | tr -d '[:space:]')
 
 if [ "${pwd}" == "" ] 
