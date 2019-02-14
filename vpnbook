@@ -160,7 +160,7 @@ curl ${vpnbook_base_url}/${pwd_url} -o /tmp/password-${timestamp}.php
 convertformat /tmp/password-${timestamp}.php /tmp/password-${timestamp}.png
 
 # Make the PNG File a bit neater so that it can be further processed
-mogrify -resize 800% /tmp/password-${timestamp}.png
+mogrify -resize 400% /tmp/password-${timestamp}.png
 
 # Tesseract appends the suffix ".txt" automatically at the end of the output filename 
 tesseract /tmp/password-${timestamp}.png /tmp/password-${timestamp} -psm 13
