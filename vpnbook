@@ -153,8 +153,9 @@ done
 check_requirements
 
 # Retrieve the Password URL from the official webpage
-pwd_url=$(curl -s ${vpnbook_url} | grep Password | tr -d ' ' | sed -n '2p' | cut -d \" -f2 | sed 's/bg.*\&//')
-echo "Retrieving Password at the following URL: ${pwd_url}"
+#pwd_url=$(curl -s ${vpnbook_url} | grep Password | tr -d ' ' | sed -n '2p' | cut -d \" -f2 | sed 's/bg.*\&//')
+pwd_url=$(curl -s ${vpnbook_url} | grep Password | tr ' ' '%' | sed -n '2p' | cut -d \" -f2 | sed 's/bg.*\&//') | tr '%' ' ') 
+echo "Retrieving Password at the following URL: ${vpnbook_url}/${pwd_url}"
 
 curl -X POST --header "apikey: 5a64d478-9c89-43d8-88e3-c65de9999580" \
 -F 'url="${vpnbook_base_url}/${pwd_url}"' \
