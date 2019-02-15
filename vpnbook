@@ -3,6 +3,7 @@
 vpnbook_folder=$HOME/.vpnbook
 vpnbook_base_url=https://www.vpnbook.com
 vpnbook_url=${vpnbook_base_url}/freevpn
+tesseract_service_url=https://api.ocr.space/parse/image
 interactive=1
 timestamp=$(date +%s)
 exit_code=0
@@ -152,10 +153,21 @@ done
 check_requirements
 
 # Retrieve the Password URL from the official webpage
-pwd_url=$(curl -s ${vpnbook_url} | grep Password | tr -d ' ' | sed -n '1p' | cut -d \" -f2 | sed 's/bg.*\&//')
+pwd_url=$(curl -s ${vpnbook_url} | grep Password | tr -d ' ' | sed -n '2p' | cut -d \" -f2 | sed 's/bg.*\&//')
 echo "Retrieving Password at the following URL: ${pwd_url}"
 
-curl -X POST --header "apikey: 5a64d478-9c89-43d8-88e3-c65de9999580" -F 'url="${pwd_url}"' -F 'language=eng' -F 'isOverlayRequired=true' -F 'FileType=.Auto' -F 'IsCreateSearchablePDF=false' -F 'isSearchablePdfHideTextLayer=true' -F 'scale=true' -F 'detectOrientation=false' -F 'isTable=false' ${tesseract_service_url} -o /tmp/password-${timestamp}.json
+curl -X POST --header "apikey: 5a64d478-9c89-43d8-88e3-c65de9999580" \
+-F 'url="${pwd_url}"' \
+-F 'language=eng' \
+-F 'isOverlayRequired=true' \
+-F 'FileType=.Auto' \
+-F 'IsCreateSearchablePDF=false' \
+-F 'isSearchablePdfHideTextLayer=true' \
+-F 'scale=true' \
+-F 'detectOrientation=false' \
+-F 'isTable=false' \
+${tesseract_service_url} -o /tmp/password-${timestamp}.json
+
 pwd_with_quotes=$(cat /tmp/password-${timestamp}.json | grep -Po '"WordText":.*?[^\\]",'| awk -F':' '{print $2}' | tr -d '[:space:]')
 pwd="${pwd_with_quotes#\"}"
 
