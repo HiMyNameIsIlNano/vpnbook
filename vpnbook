@@ -155,15 +155,23 @@ check_requirements
 pwd_url=$(curl -s ${vpnbook_url} | grep Password | tr -d ' ' | sed -n '2p' | cut -d \" -f2 | sed 's/bg.*\&//')
 echo "Retrieving Password at the following URL: ${pwd_url}"
 
-# Make sure that the output format is a real PNG file
-curl ${vpnbook_base_url}/${pwd_url} -o /tmp/password-${timestamp}.php
-convertformat /tmp/password-${timestamp}.php /tmp/password-${timestamp}.png
+curl -X POST --header "apikey: 5a64d478-9c89-43d8-88e3-c65de9999580" -F 'url=https://www.vpnbook.com/password.php?t=0.42808700 1550250062' \
+-F 'language=eng' \
+-F 'isOverlayRequired=true' \
+-F 'FileType=.Auto' \
+-F 'IsCreateSearchablePDF=false' \
+-F 'isSearchablePdfHideTextLayer=true' \
+-F 'scale=true' \
+-F 'detectOrientation=false' \
+-F 'isTable=false' \
+${tesseract_service_url} -o /tmp/password-${timestamp}.json
 
-# Make the PNG File a bit neater so that it can be further processed
-mogrify -resize 400% /tmp/password-${timestamp}.png
+pwd_with_quotes=$(cat /tmp/password-${timestamp}.json | grep -Po '"WordText":.*?[^\\]",'| awk -F':' '{print $2}' | tr -d '[:space:]')
+pwd="${pwd_with_quotes#\"}"
 
-# Tesseract appends the suffix ".txt" automatically at the end of the output filename 
-tesseract /tmp/password-${timestamp}.png /tmp/password-${timestamp} -psm 13
+echo ${pwd}
+exit 0
+
 pwd=$(cat /tmp/password-${timestamp}.txt | tr -d '[:space:]')
 
 if [ "${pwd}" == "" ] 
