@@ -157,7 +157,7 @@ pwd_url=$(curl -s ${vpnbook_url} | grep Password | tr -d ' ' | sed -n '2p' | cut
 echo "Retrieving Password at the following URL: ${pwd_url}"
 
 curl -X POST --header "apikey: 5a64d478-9c89-43d8-88e3-c65de9999580" \
--F 'url="${pwd_url}"' \
+-F 'url="${vpnbook_base_url}/${pwd_url}"' \
 -F 'language=eng' \
 -F 'isOverlayRequired=true' \
 -F 'FileType=.Auto' \
