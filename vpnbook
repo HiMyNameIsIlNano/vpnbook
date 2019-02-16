@@ -153,12 +153,11 @@ done
 check_requirements
 
 # Retrieve the Password URL from the official webpage
-#pwd_url=$(curl -s ${vpnbook_url} | grep Password | tr -d ' ' | sed -n '2p' | cut -d \" -f2 | sed 's/bg.*\&//')
-pwd_url=$(curl -s ${vpnbook_url} | grep Password | tr ' ' '%' | sed -n '2p' | cut -d \" -f2 | sed 's/bg.*\&//' | tr '%' ' ') 
+pwd_url=$(curl -s ${vpnbook_url} | grep -m2 "Password:" | tail -n1 | cut -d \" -f2)
 echo "Retrieving Password at the following URL: ${vpnbook_base_url}/${pwd_url}"
 
 curl -X POST --header "apikey: 5a64d478-9c89-43d8-88e3-c65de9999580" \
--F 'url="${vpnbook_base_url}/${pwd_url}"' \
+-F "url=${vpnbook_base_url}/${pwd_url}" \
 -F 'language=eng' \
 -F 'isOverlayRequired=true' \
 -F 'FileType=.Auto' \
@@ -171,11 +170,6 @@ ${tesseract_service_url} -o /tmp/password-${timestamp}.json
 
 pwd_with_quotes=$(cat /tmp/password-${timestamp}.json | grep -o '"WordText":.*?[^\\]",'| awk -F':' '{print $2}' | tr -d '[:space:]')
 pwd="${pwd_with_quotes#\"}"
-
-echo ${pwd}
-exit 0
-
-pwd=$(cat /tmp/password-${timestamp}.txt | tr -d '[:space:]')
 
 if [ "${pwd}" == "" ] 
 then
