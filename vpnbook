@@ -168,7 +168,7 @@ curl -X POST --header "apikey: 5a64d478-9c89-43d8-88e3-c65de9999580" \
 -F 'isTable=false' \
 ${tesseract_service_url} -o /tmp/password-${timestamp}.json
 
-pwd_with_quotes=$(cat /tmp/password-${timestamp}.json | grep -Eo '"WordText":.*?[^\\]",' | awk -F':' '{print $2}' | tr -d '[:space:]')
+pwd_with_quotes=$(cat /tmp/password-${timestamp}.json | grep -Eo '"WordText":.*?[^\\]",' | awk -F':' '{print $2}' | awk -F',' '{print $1}' | tr -d '[:space:]')
 pwd="${pwd_with_quotes#\"}"
 
 if [ "${pwd}" == "" ] 
