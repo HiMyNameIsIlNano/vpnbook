@@ -68,11 +68,9 @@ is_installed(){
 }
 
 check_requirements(){
-	# Check if sudo, curl tesseract, ImageMagick and openvpn are installed
+	# Check if sudo, curl and openvpn are installed
 	is_installed sudo
 	is_installed curl
-	is_installed tesseract
-	is_installed mogrify
 	is_installed openvpn
 	is_user_allowed_to_vpn
 }
