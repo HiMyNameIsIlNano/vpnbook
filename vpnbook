@@ -151,22 +151,11 @@ done
 check_requirements
 
 # Retrieve the Password URL from the official webpage
-pwd_url=$(curl -s ${vpnbook_url} | grep -m2 "Password:" | tail -n1 | cut -d \" -f2)
-echo "Retrieving Password at the following URL: ${vpnbook_base_url}/${pwd_url}"
+${vpnbook_folder}/password_extractor -o /tmp/password-${timestamp}.json
 
-curl -X POST --header "apikey: 5a64d478-9c89-43d8-88e3-c65de9999580" \
--F "url=${vpnbook_base_url}/${pwd_url}" \
--F 'language=eng' \
--F 'isOverlayRequired=true' \
--F 'FileType=.Auto' \
--F 'IsCreateSearchablePDF=false' \
--F 'isSearchablePdfHideTextLayer=true' \
--F 'scale=true' \
--F 'detectOrientation=false' \
--F 'isTable=false' \
-${tesseract_service_url} -o /tmp/password-${timestamp}.json
+# Add check if output file exists
 
-pwd=$(cat /tmp/password-${timestamp}.json | grep -Eo '"WordText":.*?[^\\]",' | awk -F':' '{print $2}' | awk -F',' '{print $1}' | tr -d '[:space:]' | tr -d \")
+pwd=$(cat /tmp/password-${timestamp}.json)
 
 if [ "${pwd}" == "" ] 
 then
@@ -218,6 +207,7 @@ else
 	connect_to_first_available ${var}
 	OPENVPN_EXIT_STATUS=$?
 	
+	# The Tunnel is established if the tun1 interface exists
 	if [ ${OPENVPN_EXIT_STATUS} -eq 0  ]; then
 		echo "Vpn Tunnel established"
 	else

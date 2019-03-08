@@ -21,6 +21,7 @@ mkdir -p ${default_dir}
 
 echo "Copying Script under ${HOME}/.local/scripts..."
 cp vpnbook ${default_dir}
+cp password_extractor ${default_dir}
 
 echo "In order to work, the User: $USER must be part of a group called vpnstarter. Add the following lines to your sudoers configuration file..."
 echo '## Members of the Group vpnstarter can run openvpn'
