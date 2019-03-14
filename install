@@ -30,7 +30,7 @@ cp password_extractor ${default_dir}
 chmod 744 ${default_dir}/password_extractor
 
 echo "Adding VPN Book to autostart.sh..."
-echo '(sleep 20 && /home/Developer/.local/scripts/vpnbook_wrapper -s US1) &' > ${HOME}/.config/openbox/autostart.sh
+echo '(sleep 20 && /home/Developer/.local/scripts/vpnbook_wrapper -s US1) &' >> ${HOME}/.config/openbox/autostart.sh
 
 echo "In order to work, the User: $USER must be part of a group called vpnstarter. Add the following lines to your sudoers configuration file..."
 echo '## Members of the Group vpnstarter can run openvpn'
