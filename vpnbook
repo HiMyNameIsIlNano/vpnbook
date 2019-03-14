@@ -220,7 +220,7 @@ else
 	connect_to_first_available ${var}
 	wait_for_seconds 10
 	
-	OPENVPN_EXIT_STATUS=$(ifconfig tun1 | grep "tun1: flags" | | cut -d \: -f1)
+	OPENVPN_EXIT_STATUS=$(ifconfig tun1 | grep "tun1: flags" | cut -d \: -f1)
 	# The Tunnel is established if the tun1 interface exists
 	if [ ${OPENVPN_EXIT_STATUS} == 'tun1'  ]; then
 		echo "Vpn Tunnel established"
