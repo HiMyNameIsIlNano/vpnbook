@@ -1,13 +1,5 @@
 #!/bin/sh
 
-vpnbook_folder=$HOME/.vpnbook
-vpnbook_base_url=https://www.vpnbook.com
-vpnbook_url=${vpnbook_base_url}/freevpn
-tesseract_service_url=https://api.ocr.space/parse/image
-interactive=1
-timestamp=$(date +%s)
-exit_code=0
-
 # Start functions  
 # Print out the menu
 show_menu(){
@@ -130,6 +122,16 @@ connect_to_first_available(){
 }
 # End functions 
 
+default_dir=${HOME}/.local/scripts
+vpnbook_folder=$HOME/.vpnbook
+vpnbook_base_url=https://www.vpnbook.com
+vpnbook_url=${vpnbook_base_url}/freevpn
+tesseract_service_url=https://api.ocr.space/parse/image
+interactive=1
+timestamp=$(date +%s)
+pwd=''
+exit_code=0
+
 # Start Script
 while [ "$1" != "" ]; do
     case $1 in
@@ -151,11 +153,16 @@ done
 check_requirements
 
 # Retrieve the Password URL from the official webpage
-${vpnbook_folder}/password_extractor -o /tmp/password-${timestamp}.json
+sh ${default_dir}/password_extractor -o /tmp/password-${timestamp}.json
 
-# Add check if output file exists
-
-pwd=$(cat /tmp/password-${timestamp}.json)
+# If password file exists
+if [ -f "/tmp/password-${timestamp}.json" ]
+then
+	echo "Reading Password from /tmp/password-${timestamp}.json"
+	pwd=$(cat /tmp/password-${timestamp}.json)
+else
+	echo "File /tmp/password-${timestamp}.json does not exist"
+fi
 
 if [ "${pwd}" == "" ] 
 then
