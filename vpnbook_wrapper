@@ -10,9 +10,9 @@ open_xterm_terminal(){
 	local l_server="$1"
 	local l_interactive="$2"
 	if [ ${l_interactive} = "1" ]; then	
-		xterm -title "VPN Book" -hold -e "${default_dir}/vpnbook -s ${l_server} -i"
+		xterm -title "VPN Book" -hold -e "cd ${default_dir} && ./vpnbook -s ${l_server} -i"
 	else
-		xterm -title "VPN Book" -hold -e "${default_dir}/vpnbook -s ${l_server}"
+		xterm -title "VPN Book" -hold -e "cd ${default_dir} && ./vpnbook -s ${l_server}"
 	fi						
 }
 

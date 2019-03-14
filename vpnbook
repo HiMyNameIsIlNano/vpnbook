@@ -120,6 +120,12 @@ connect_to_first_available(){
 		return 1
 	fi
 }
+
+wait_for_seconds(){
+	local seconds="$@"
+	echo "waiting ${seconds} seconds before continuing..."
+	sleep ${seconds}
+}
 # End functions 
 
 default_dir=${HOME}/.local/scripts
@@ -212,10 +218,11 @@ else
 	
 	# Start the connection and if whatever error occurs, then connect to the first available server
 	connect_to_first_available ${var}
-	OPENVPN_EXIT_STATUS=$?
+	wait_for_seconds 10
 	
+	OPENVPN_EXIT_STATUS=$(ifconfig tun1 | grep "tun1: flags" | | cut -d \: -f1)
 	# The Tunnel is established if the tun1 interface exists
-	if [ ${OPENVPN_EXIT_STATUS} -eq 0  ]; then
+	if [ ${OPENVPN_EXIT_STATUS} == 'tun1'  ]; then
 		echo "Vpn Tunnel established"
 	else
 		echo "An Error has occurred while trying to Establish the Vpn Tunnel..."
