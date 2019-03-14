@@ -1,0 +1,71 @@
+#!/bin/sh
+
+read_property(){
+	input="$@"
+	temp=`cat $config_file | sed 's/\"//g' | grep -w $input | cut -d ":" -f2`
+	echo ${temp##*|}
+}
+
+open_xterm_terminal(){
+	local l_server="$1"
+	local l_interactive="$2"
+	if [ ${l_interactive} = "1" ]; then	
+		xterm -title "VPN Book" -hold -e "${default_dir}/vpnbook -s ${l_server} -i"
+	else
+		xterm -title "VPN Book" -hold -e "${default_dir}/vpnbook -s ${l_server}"
+	fi						
+}
+
+is_installed(){
+	echo "Checking if $1 is installed..."
+	if ! [ -x "$(command -v $1)" ]; then
+	  echo "Error: $1 is not installed." >&2
+	  exit 1
+    else
+	  echo "$1 is installed." >&2
+	fi
+}
+
+check_requiremnts(){
+	echo "Checking general Requirements..."
+	# Check if git is installed
+	is_installed ${terminal_emulator}
+}
+
+default_dir=${HOME}/.local/scripts
+config_file=${default_dir}/vpnbook.config
+
+# Start Script
+while [ "$1" != "" ]; do
+    case $1 in
+        -s | --server )         shift
+                                server=$1
+                                interactive=0
+                                ;;
+        -i | --interactive )    interactive=1
+                                ;;
+        -h | --help )           usage
+                                exit
+                                ;;
+        * )                     usage
+                                exit 1
+    esac
+    shift
+done
+
+# Variable Declaration
+terminal_emulator=$(read_property terminal_emulator)
+
+# Check if the terminal emulator is installed
+is_installed ${terminal_emulator}
+echo "Starting VPN conncetion to ${server} and interactive ${interactive}..."
+
+case ${terminal_emulator} in
+	xterm | XTERM )		echo "Terminal emulator ${terminal_emulator} is supported."
+						open_xterm_terminal ${server} ${interactive}
+						;;
+	* )					echo "Terminal emulator ${terminal_emulator} not supported."
+						exit 1
+esac
+
+exit 0
