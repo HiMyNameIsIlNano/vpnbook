@@ -32,6 +32,18 @@ check_requiremnts(){
 	is_installed ${terminal_emulator}
 }
 
+check_if_up(){
+	wait_for_seconds 10
+	
+	local if_id="$@"
+	local if_result=$(ifconfig ${if_id} | grep "${if_id}: flags" | cut -d \: -f1)
+	if [ ${if_result} == "${if_id}"  ]; then
+		return 1
+	else
+		return 0
+	fi
+}
+
 default_dir=${HOME}/.local/scripts
 config_file=${default_dir}/vpnbook.config
 
@@ -55,6 +67,15 @@ done
 
 # Variable Declaration
 terminal_emulator=$(read_property terminal_emulator)
+vpnbook_if_name=$(read_property vpnbook_if_name)
+
+# Check if the 'tun1' interface is up and running
+check_if_up ${vpnbook_if_name}
+# The Tunnel is established if the tun1 interface exists
+if [ $? -eq 1  ]; then
+	echo "Nothing to do here. Vpn Tunnel already established."
+	exit 0
+fi
 
 # Check if the terminal emulator is installed
 is_installed ${terminal_emulator}

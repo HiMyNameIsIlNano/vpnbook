@@ -27,6 +27,12 @@ usage(){
 	echo "if no parameter is set the interactive mode is started."
 }
 
+read_property(){
+	input="$@"
+	temp=`cat $config_file | sed 's/\"//g' | grep -w $input | cut -d ":" -f2`
+	echo ${temp##*|}
+}
+
 zip_downloader(){
 	local base_name=VPNBook.com-OpenVPN
 	local country=$1 	
@@ -126,13 +132,27 @@ wait_for_seconds(){
 	echo "waiting ${seconds} seconds before continuing..."
 	sleep ${seconds}
 }
+
+check_if_up(){
+	wait_for_seconds 10
+	
+	local if_id="$@"
+	local if_result=$(ifconfig ${if_id} | grep "${if_id}: flags" | cut -d \: -f1)
+	if [ ${if_result} == "${if_id}"  ]; then
+		return 1
+	else
+		return 0
+	fi
+}
 # End functions 
 
+# Variable Declaration
 default_dir=${HOME}/.local/scripts
 vpnbook_folder=$HOME/.vpnbook
 vpnbook_base_url=https://www.vpnbook.com
 vpnbook_url=${vpnbook_base_url}/freevpn
 tesseract_service_url=https://api.ocr.space/parse/image
+vpnbook_if_name=$(read_property vpnbook_if_name)
 interactive=1
 timestamp=$(date +%s)
 pwd=''
@@ -155,6 +175,14 @@ while [ "$1" != "" ]; do
     esac
     shift
 done
+
+# Check if the 'tun1' interface is up and running
+check_if_up ${vpnbook_if_name}
+# The Tunnel is established if the tun1 interface exists
+if [ $? -eq 1  ]; then
+	echo "Nothing to do here. Vpn Tunnel already established."
+	exit 0
+fi
 
 check_requirements
 
@@ -218,11 +246,12 @@ else
 	
 	# Start the connection and if whatever error occurs, then connect to the first available server
 	connect_to_first_available ${var}
-	wait_for_seconds 10
 	
-	OPENVPN_EXIT_STATUS=$(ifconfig tun1 | grep "tun1: flags" | cut -d \: -f1)
+	# Check if the 'tun1' interface is up and running
+	check_if_up "tun1"
+	
 	# The Tunnel is established if the tun1 interface exists
-	if [ ${OPENVPN_EXIT_STATUS} == 'tun1'  ]; then
+	if [ $? -eq 1  ]; then
 		echo "Vpn Tunnel established"
 	else
 		echo "An Error has occurred while trying to Establish the Vpn Tunnel..."
