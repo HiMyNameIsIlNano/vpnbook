@@ -3,8 +3,13 @@
 # Begin Functions
 read_property(){
 	input="$@"
-	temp=`cat $config_file | sed 's/\"//g' | grep -w $input | cut -d ":" -f2`
-	echo ${temp##*|}
+	if [ ! -f ${config_file} ]; then
+		echo "${config_file} does not exist... Aborting..."
+		exit 1
+	else
+		temp=`cat $config_file | sed 's/\"//g' | grep -w $input | cut -d ":" -f2` 
+		echo ${temp##*|}
+	fi
 }
 
 open_xterm_terminal(){
@@ -40,7 +45,7 @@ wait_for_seconds(){
 }
 
 check_if_up(){
-	wait_for_seconds 10
+	wait_for_seconds 5
 	
 	local if_id="$@"
 	local if_result=$(ifconfig ${if_id} | grep "${if_id}: flags" | cut -d \: -f1)

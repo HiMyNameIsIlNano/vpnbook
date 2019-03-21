@@ -29,8 +29,13 @@ usage(){
 
 read_property(){
 	input="$@"
-	temp=`cat $config_file | sed 's/\"//g' | grep -w $input | cut -d ":" -f2`
-	echo ${temp##*|}
+	if [ ! -f ${config_file} ]; then
+		echo "${config_file} does not exist... Aborting..."
+		exit 1
+	else
+		temp=`cat $config_file | sed 's/\"//g' | grep -w $input | cut -d ":" -f2` 
+		echo ${temp##*|}
+	fi
 }
 
 zip_downloader(){
@@ -138,7 +143,7 @@ check_if_up(){
 	
 	local if_id="$@"
 	local if_result=$(ifconfig ${if_id} | grep "${if_id}: flags" | cut -d \: -f1)
-	if [ ${if_result} == "${if_id}"  ]; then
+	if [ "${if_result}" == "${if_id}"  ]; then
 		return 1
 	else
 		return 0
@@ -148,7 +153,8 @@ check_if_up(){
 
 # Variable Declaration
 default_dir=${HOME}/.local/scripts
-vpnbook_folder=$HOME/.vpnbook
+config_file=${default_dir}/vpnbook.config
+vpnbook_folder=${HOME}/.vpnbook
 vpnbook_base_url=https://www.vpnbook.com
 vpnbook_url=${vpnbook_base_url}/freevpn
 tesseract_service_url=https://api.ocr.space/parse/image
