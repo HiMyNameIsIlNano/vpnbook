@@ -44,7 +44,7 @@ check_if_up(){
 	
 	local if_id="$@"
 	local if_result=$(ifconfig ${if_id} | grep "${if_id}: flags" | cut -d \: -f1)
-	if [ ${if_result} == "${if_id}"  ]; then
+	if [  "${if_result}" == "${if_id}"  ]; then
 		return 1
 	else
 		return 0
