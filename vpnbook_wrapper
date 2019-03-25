@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# Begin Functions
 read_property(){
 	input="$@"
 	temp=`cat $config_file | sed 's/\"//g' | grep -w $input | cut -d ":" -f2`
@@ -32,6 +33,12 @@ check_requiremnts(){
 	is_installed ${terminal_emulator}
 }
 
+wait_for_seconds(){
+	local seconds="$@"
+	echo "waiting ${seconds} seconds before continuing..."
+	sleep ${seconds}
+}
+
 check_if_up(){
 	wait_for_seconds 10
 	
@@ -43,6 +50,7 @@ check_if_up(){
 		return 0
 	fi
 }
+# End Functions
 
 default_dir=${HOME}/.local/scripts
 config_file=${default_dir}/vpnbook.config
