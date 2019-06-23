@@ -1,9 +1,15 @@
 #!/bin/sh
 
+# Begin Functions
 __read_property(){
 	input="$@"
-	temp=`cat $config_file | sed 's/\"//g' | grep -w $input | cut -d ":" -f2`
-	echo ${temp##*|}
+	if [ ! -f ${config_file} ]; then
+		echo "${config_file} does not exist... Aborting..."
+		exit 1
+	else
+		temp=`cat $config_file | sed 's/\"//g' | grep -w $input | cut -d ":" -f2`
+		echo ${temp##*|}
+	fi
 }
 
 __open_xterm_terminal(){
@@ -43,12 +49,13 @@ __check_requiremnts(){
 	
 	local if_id="$@"
 	local if_result=$(ifconfig ${if_id} | grep "${if_id}: flags" | cut -d \: -f1)
-	if [ ${if_result} == "${if_id}"  ]; then
+	if [  "${if_result}" == "${if_id}"  ]; then
 		return 1
 	else
 		return 0
 	fi
 }
+# End Functions
 
 default_dir=${HOME}/.local/scripts
 config_file=${default_dir}/vpnbook.config
