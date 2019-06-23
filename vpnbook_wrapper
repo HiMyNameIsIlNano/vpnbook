@@ -1,12 +1,12 @@
 #!/bin/sh
 
-read_property(){
+__read_property(){
 	input="$@"
 	temp=`cat $config_file | sed 's/\"//g' | grep -w $input | cut -d ":" -f2`
 	echo ${temp##*|}
 }
 
-open_xterm_terminal(){
+__open_xterm_terminal(){
 	local l_server="$1"
 	local l_interactive="$2"
 	if [ ${l_interactive} = "1" ]; then	
@@ -16,7 +16,7 @@ open_xterm_terminal(){
 	fi						
 }
 
-is_installed(){
+__is_installed(){
 	echo "Checking if $1 is installed..."
 	if ! [ -x "$(command -v $1)" ]; then
 	  echo "Error: $1 is not installed." >&2
@@ -26,14 +26,20 @@ is_installed(){
 	fi
 }
 
-check_requiremnts(){
+__check_requirements(){
 	echo "Checking general Requirements..."
 	# Check if git is installed
-	is_installed ${terminal_emulator}
+	__is_installed ${terminal_emulator}
 }
 
-check_if_up(){
-	wait_for_seconds 10
+__wait_for_seconds(){
+	local seconds="$@"
+	echo "waiting ${seconds} seconds before continuing..."
+	sleep ${seconds}
+}
+
+__check_requiremnts(){
+	__wait_for_seconds 10
 	
 	local if_id="$@"
 	local if_result=$(ifconfig ${if_id} | grep "${if_id}: flags" | cut -d \: -f1)
@@ -66,11 +72,11 @@ while [ "$1" != "" ]; do
 done
 
 # Variable Declaration
-terminal_emulator=$(read_property terminal_emulator)
-vpnbook_if_name=$(read_property vpnbook_if_name)
+terminal_emulator=$(__read_property terminal_emulator)
+vpnbook_if_name=$(__read_property vpnbook_if_name)
 
 # Check if the 'tun1' interface is up and running
-check_if_up ${vpnbook_if_name}
+__check_requirements ${vpnbook_if_name}
 # The Tunnel is established if the tun1 interface exists
 if [ $? -eq 1  ]; then
 	echo "Nothing to do here. Vpn Tunnel already established."
@@ -78,12 +84,12 @@ if [ $? -eq 1  ]; then
 fi
 
 # Check if the terminal emulator is installed
-is_installed ${terminal_emulator}
+__is_installed ${terminal_emulator}
 echo "Starting VPN conncetion to ${server} and interactive ${interactive}..."
 
 case ${terminal_emulator} in
 	xterm | XTERM )		echo "Terminal emulator ${terminal_emulator} is supported."
-						open_xterm_terminal ${server} ${interactive}
+						__open_xterm_terminal ${server} ${interactive}
 						;;
 	* )					echo "Terminal emulator ${terminal_emulator} not supported."
 						exit 1

@@ -2,7 +2,7 @@
 
 # Start functions  
 # Print out the menu
-show_menu(){
+__show_menu(){
     NORMAL=`echo "\033[m"`
     MENU=`echo "\033[36m"` #Blue
     NUMBER=`echo "\033[33m"` #yellow
@@ -21,19 +21,19 @@ show_menu(){
 }
 
 # Print out the help
-usage(){
+__usage(){
     echo "usage: vpnbook [[[-s server ] [-i]] | [-h]]"
 	echo "server can be {PL226, DE4, US1, US2, CA222, FR1}"
 	echo "if no parameter is set the interactive mode is started."
 }
 
-read_property(){
+__read_property(){
 	input="$@"
 	temp=`cat $config_file | sed 's/\"//g' | grep -w $input | cut -d ":" -f2`
 	echo ${temp##*|}
 }
 
-zip_downloader(){
+__zip_downloader(){
 	local base_name=VPNBook.com-OpenVPN
 	local country=$1 	
 	local ext=zip
@@ -48,7 +48,7 @@ zip_downloader(){
 	fi
 }
 
-is_user_allowed_to_vpn(){
+__is_user_allowed_to_vpn(){
 	local group=$(id -G -n $USER | grep -o "vpnstarter")
 	if [ "${group}" == "vpnstarter" ]; then
 		echo "The user is part of the vpnstarter Group"
@@ -58,22 +58,22 @@ is_user_allowed_to_vpn(){
 	fi
 }
 
-is_installed(){
+__is_installed(){
 	if ! [ -x "$(command -v $1)" ]; then
 	  echo 'Error: $1 is not installed.' >&2
 	  exit 1
 	fi
 }
 
-check_requirements(){
+__check_requirements(){
 	# Check if sudo, curl and openvpn are installed
-	is_installed sudo
-	is_installed curl
-	is_installed openvpn
-	is_user_allowed_to_vpn
+	__is_installed sudo
+	__is_installed curl
+	__is_installed openvpn
+	__is_user_allowed_to_vpn
 }
 
-connect_to() {
+__connect_to() {
 	local server=$1
 	local l_server=$(echo ${server} | tr '[:upper:]' '[:lower:]')
 	
@@ -88,7 +88,7 @@ connect_to() {
 	fi
 }
 
-connect_to_first_available(){	 
+__connect_to_first_available(){
 	local server=$1
 	local OPENVPN_EXIT_STATUS
 	
@@ -98,7 +98,7 @@ connect_to_first_available(){
 		local l_server=$(echo ${server} | tr '[:upper:]' '[:lower:]')	
 		
 		echo "Trying to Establish the Vpn Tunnel to ${server}..."
-		connect_to ${server}
+		__connect_to ${server}
 		OPENVPN_EXIT_STATUS=$?
 		
 		if [ ${OPENVPN_EXIT_STATUS} -eq 0  ]; then
@@ -112,7 +112,7 @@ connect_to_first_available(){
 				# Just skip a reconnection to the same Server given as input
 				if [ "${i}" != "${server}" ]
 				then
-					connect_to ${i}
+					__connect_to ${i}
 					OPENVPN_EXIT_STATUS=$?
 					if [ ${OPENVPN_EXIT_STATUS} -eq 0  ]; then
 						return 0
@@ -127,14 +127,14 @@ connect_to_first_available(){
 	fi
 }
 
-wait_for_seconds(){
+__wait_for_seconds(){
 	local seconds="$@"
 	echo "waiting ${seconds} seconds before continuing..."
 	sleep ${seconds}
 }
 
-check_if_up(){
-	wait_for_seconds 10
+__check_if_up(){
+	__wait_for_seconds 10
 	
 	local if_id="$@"
 	local if_result=$(ifconfig ${if_id} | grep "${if_id}: flags" | cut -d \: -f1)
@@ -152,7 +152,7 @@ vpnbook_folder=$HOME/.vpnbook
 vpnbook_base_url=https://www.vpnbook.com
 vpnbook_url=${vpnbook_base_url}/freevpn
 tesseract_service_url=https://api.ocr.space/parse/image
-vpnbook_if_name=$(read_property vpnbook_if_name)
+vpnbook_if_name=$(__read_property vpnbook_if_name)
 interactive=1
 timestamp=$(date +%s)
 pwd=''
@@ -167,24 +167,24 @@ while [ "$1" != "" ]; do
                                 ;;
         -i | --interactive )    interactive=1
                                 ;;
-        -h | --help )           usage
+        -h | --help )           __usage
                                 exit
                                 ;;
-        * )                     usage
+        * )                     __usage
                                 exit 1
     esac
     shift
 done
 
 # Check if the 'tun1' interface is up and running
-check_if_up ${vpnbook_if_name}
+__check_if_up ${vpnbook_if_name}
 # The Tunnel is established if the tun1 interface exists
 if [ $? -eq 1  ]; then
 	echo "Nothing to do here. Vpn Tunnel already established."
 	exit 0
 fi
 
-check_requirements
+__check_requirements
 
 # Retrieve the Password URL from the official webpage
 sh ${default_dir}/password_extractor -o /tmp/password-${timestamp}.json
@@ -208,7 +208,7 @@ else
 	
 	for i in PL226 DE4 US1 US2 CA222 FR1
 	do
-		zip_downloader ${i}
+		__zip_downloader ${i}
 	done
 	 	
 	echo "Password retrieved from server: ${pwd}"
@@ -224,7 +224,7 @@ else
 
 	# Test code to verify command line processing
 	if [ ${interactive} = "1" ]; then
-		show_menu
+		__show_menu
 		read opt
 		
 		case $opt in
@@ -245,10 +245,10 @@ else
 	sudo -v
 	
 	# Start the connection and if whatever error occurs, then connect to the first available server
-	connect_to_first_available ${var}
+	__connect_to_first_available ${var}
 	
 	# Check if the 'tun1' interface is up and running
-	check_if_up "tun1"
+	__check_if_up "tun1"
 	
 	# The Tunnel is established if the tun1 interface exists
 	if [ $? -eq 1  ]; then

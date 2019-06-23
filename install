@@ -1,20 +1,20 @@
 #!/bin/sh
 
-is_installed(){
+__is_installed(){
 	if ! [ -x "$(command -v $1)" ]; then
 	  echo "Error: $1 is not installed." >&2
 	  exit 1
 	fi
 }
 
-check_requirements(){
+__check_requirements(){
 	# Check if sudo, curl and openvpn are installed
-	is_installed sudo
-	is_installed curl
-	is_installed openvpn
+	__is_installed sudo
+	__is_installed curl
+	__is_installed openvpn
 }
 
-check_requirements
+__check_requirements
 
 default_dir=${HOME}/.local/scripts
 mkdir -p ${default_dir}
