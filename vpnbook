@@ -253,10 +253,10 @@ else
 	# Start the connection and if whatever error occurs, then connect to the first available server
 	__connect_to_first_available ${var}
 	
-	# Check if the 'tun1' interface is up and running
-	__check_if_up "tun1"
+	# Check if the given interface is up and running
+	__check_if_up ${vpnbook_if_name}
 	
-	# The Tunnel is established if the tun1 interface exists
+	# The Tunnel is established if the interface exists
 	if [ $? -eq 1  ]; then
 		echo "Vpn Tunnel established"
 	else
