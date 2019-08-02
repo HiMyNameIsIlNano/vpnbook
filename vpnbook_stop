@@ -1,3 +1,47 @@
 #!/bin/sh
 
-killall openvpn
+# Print out the help
+__usage(){
+    echo "usage: vpnbook [[[-s server ] [-i]] | [-h]]"
+	echo "server can be {PL226, DE4, US1, US2, CA222, FR1}"
+	echo "if no parameter is set the interactive mode is started."
+}
+
+__read_property(){
+	input="$@"
+	if [ ! -f ${config_file} ]; then
+		echo "${config_file} does not exist... Aborting..."
+		exit 1
+	else
+		temp=`cat $config_file | sed 's/\"//g' | grep -w $input | cut -d ":" -f2`
+		echo ${temp##*|}
+	fi
+}
+
+__check_if_up(){
+	__wait_for_seconds 10
+
+	local if_id="$@"
+	local if_result=$(ifconfig ${if_id} | grep "${if_id}: flags" | cut -d \: -f1)
+	if [ "${if_result}" == "${if_id}"  ]; then
+		return 1
+	else
+		return 0
+	fi
+}
+# End functions
+
+vpnbook_if_name=$(__read_property vpnbook_if_name)
+
+__check_if_up ${vpnbook_if_name}
+
+# The Tunnel is established if the interface exists
+if [ $? -eq 1  ]; then
+    ifconfig ${vpnbook_if_name} down
+    /etc/rc.d/netif restart
+    exit 0;
+else
+    echo "The provided interface ${vpnbook_if_name} does not exist..."
+    exit 1;
+fi
+
