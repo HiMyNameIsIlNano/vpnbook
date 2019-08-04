@@ -2,9 +2,7 @@
 
 # Print out the help
 __usage(){
-    echo "usage: vpnbook [[[-s server ] [-i]] | [-h]]"
-	echo "server can be {PL226, DE4, US1, US2, CA222, FR1}"
-	echo "if no parameter is set the interactive mode is started."
+    echo "usage: vpnbook_stop [| -h]"
 }
 
 __read_property(){
@@ -32,6 +30,18 @@ __check_if_up(){
 # End functions
 
 vpnbook_if_name=$(__read_property vpnbook_if_name)
+
+# Start Script
+while [ "$1" != "" ]; do
+    case $1 in
+        -h | --help )           __usage
+                                exit
+                                ;;
+        * )                     __usage
+                                exit 1
+    esac
+    shift
+done
 
 __check_if_up ${vpnbook_if_name}
 
