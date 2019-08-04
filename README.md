@@ -2,4 +2,4 @@ OpenVPN is the best and most recommended open-source VPN software world-wide. It
 
 ### TODO:
 
-- [ ] add .gitignore
+- [x] add .gitignore
