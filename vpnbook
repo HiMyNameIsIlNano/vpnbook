@@ -39,17 +39,17 @@ __read_property(){
 }
 
 __zip_downloader(){
-	local base_name=VPNBook.com-OpenVPN
+	local base_name=vpnbook-openvpn
 	local country=$1 	
 	local ext=zip
-	local u_country=$(echo $country | tr '[:lower:]' '[:upper:]')
+	local u_country=$(echo $country | tr '[:upper:]' '[:lower:]')
 
 	if [ ! -f ${vpnbook_folder}/${u_country}/${base_name}-${country}.${ext} ]; then
 		echo "Downloading" ${base_name}-${country}.${ext}	    	
-		curl ${vpnbook_base_url}/free-openvpn-account/${base_name}-${country}.${ext} -o ${vpnbook_folder}/${base_name}-${country}.${ext} 
+		curl ${vpnbook_base_url}/free-openvpn-account/${base_name}-${u_country}.${ext} -o ${vpnbook_folder}/${base_name}-${u_country}.${ext} 
 		# Make the original variable uppercase					
-		unzip ${vpnbook_folder}/${base_name}-${country}.${ext} -d ${vpnbook_folder}/${u_country}	
-		mv ${vpnbook_folder}/${base_name}-${country}.${ext} ${vpnbook_folder}/${u_country}
+		unzip ${vpnbook_folder}/${base_name}-${u_country}.${ext} -d ${vpnbook_folder}/${u_country}	
+    mv ${vpnbook_folder}/${base_name}-${u_country}.${ext} ${vpnbook_folder}/${u_country}
 	fi
 }
 
@@ -82,13 +82,14 @@ __connect_to() {
 	local server=$1
 	local l_server=$(echo ${server} | tr '[:upper:]' '[:lower:]')
 	
-	if [ -f ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn ]
+	if [ -f ${vpnbook_folder}/${server}/vpnbook-openvpn-${l_server}/vpnbook-${l_server}-tcp443.ovpn ]
 	then
 		echo "Trying to Establish the Vpn Tunnel to ${i}..."
-		sudo openvpn --config ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn --auth-user-pass ${vpnbook_folder}/login.conf > /tmp/vpnbook.log &
+    echo "Looking for file: ${vpnbook_folder}/${server}/vpnbook-openvpn-${l_server}/vpnbook-${l_server}-tcp443.ovpn"
+    sudo openvpn --config ${vpnbook_folder}/${server}/vpnbook-openvpn-${l_server}/vpnbook-${l_server}-tcp443.ovpn --auth-user-pass ${vpnbook_folder}/login.conf --pull --route-ipv6 2000::/3 --dhcp-option DNS6 2001:4860:4860::8888 > ./tmp/vpnbook.log &
 		return 0
 	else 
-		echo "${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn was not found..."
+		echo "${vpnbook_folder}/${server}/vpnbook-openvpn-${l_server}/vpnbook-${l_server}-tcp443.ovpn was not found..."
 		return 1
 	fi
 }
@@ -112,7 +113,7 @@ __connect_to_first_available(){
 		else
 			echo "Trying to connect to another server..."
 			# If the connection was unsuccesful, then try to connect to the first available Server
-			for i in PL226 DE4 US1 US2 CA222 FR1
+			for i in pl134 de20 us1 uk205 ca149 fr200
 			do
 				# Just skip a reconnection to the same Server given as input
 				if [ "${i}" != "${server}" ]
@@ -152,9 +153,9 @@ __check_if_up(){
 # End functions 
 
 # Variable Declaration
-default_dir=${HOME}/.local/scripts
+default_dir=.
 config_file=${default_dir}/vpnbook.config
-vpnbook_folder=${HOME}/.vpnbook
+vpnbook_folder=${default_dir}/.vpnbook
 vpnbook_base_url=https://www.vpnbook.com
 vpnbook_url=${vpnbook_base_url}/freevpn
 tesseract_service_url=https://api.ocr.space/parse/image
@@ -193,15 +194,15 @@ fi
 __check_requirements
 
 # Retrieve the Password URL from the official webpage
-sh ${default_dir}/password_extractor -o /tmp/password-${timestamp}.json
+sh ${default_dir}/password_extractor -o ./tmp/password-${timestamp}.json
 
 # If password file exists
-if [ -f "/tmp/password-${timestamp}.json" ]
+if [ -f "./tmp/password-${timestamp}.json" ]
 then
-	echo "Reading Password from /tmp/password-${timestamp}.json"
-	pwd=$(cat /tmp/password-${timestamp}.json)
+	echo "Reading Password from ./tmp/password-${timestamp}.json"
+	pwd=$(cat ./tmp/password-${timestamp}.json)
 else
-	echo "File /tmp/password-${timestamp}.json does not exist"
+	echo "File ./tmp/password-${timestamp}.json does not exist"
 fi
 
 if [ "${pwd}" == "" ] 
@@ -212,7 +213,7 @@ then
 else
 	mkdir -p ${vpnbook_folder} 	
 	
-	for i in PL226 DE4 US1 US2 CA222 FR1
+	for i in pl134 de20 us1 uk205 ca149 fr200 
 	do
 		__zip_downloader ${i}
 	done
@@ -234,12 +235,12 @@ else
 		read opt
 		
 		case $opt in
-		1) var=PL226;;
-		2) var=DE4;;
-		3) var=US1;;
-		4) var=US2;;
-		5) var=CA222;;
-		6) var=FR1;;
+		1) var=pl34;;
+		2) var=de20;;
+		3) var=us1;;
+		4) var=uk205;;
+		5) var=ca149;;
+		6) var=fr200;;
 		*) echo "Exit"; exit;;
 		esac
 	else
@@ -265,7 +266,7 @@ else
 	fi
 
 	echo "Cleaning temporary Files..."
-	rm /tmp/password-${timestamp}.json
+	rm ./tmp/password-${timestamp}.json
 	
 	# End Script
 	exit ${exit_code}
