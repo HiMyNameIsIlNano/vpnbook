@@ -55,7 +55,8 @@ if __check_if_down "${vpnbook_if_name}"; then
 else
     echo "Stopping VPN interface ${vpnbook_if_name}..."
     sudo ip link set "${vpnbook_if_name}" down
-    killall openvpn
+    
+    sudo pkill openvpn
     echo "VPN interface ${vpnbook_if_name} has been stopped."
     exit 0
 fi
