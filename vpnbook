@@ -80,72 +80,106 @@ __check_requirements(){
 	__is_user_allowed_to_vpn
 }
 
-__connect_to() {
-	local server=$1
-	local l_server=$(echo ${server} | tr '[:upper:]' '[:lower:]')
-	
-	if [ -f ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn ]
-	then
-		echo "Trying to Establish the Vpn Tunnel to ${i}..."
 
-    # Logging 
+__connect_to() {
+    local server=$1
+    local l_server=$(echo ${server} | tr '[:upper:]' '[:lower:]')
     
-    echo "Looking for file: ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn"
-    
-    sudo openvpn --config ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn --auth-user-pass ${vpnbook_folder}/login.conf --pull --route-ipv6 2000::/3 --dhcp-option DNS6 2001:4860:4860::8888 > ./tmp/vpnbook.log &
-		return 0
-  elif [ ! -f ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn ]
-  then
-    echo "${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn not found"
-  else 
-		# echo "${vpnbook_folder}/${server}/vpnbook-openvpn-${l_server}/vpnbook-${l_server}-tcp443.ovpn was not found..."
-		echo "Some other error"
-    return 1
-	fi
+    if [ -f ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn ]; then
+        echo "Trying to Establish the Vpn Tunnel to ${server}..."
+        
+        echo "Looking for file: ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn"
+        
+        sudo openvpn --config ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn \
+                     --auth-user-pass ${vpnbook_folder}/login.conf \
+                     --pull --route-ipv6 2000::/3 \
+                     --dhcp-option DNS6 2001:4860:4860::8888 > ./tmp/vpnbook.log 2>&1 &
+        
+        # Wait a few seconds to allow OpenVPN to attempt the connection
+        sleep 5
+        
+        # Check for AUTH_FAILED in the OpenVPN log
+        if grep -q "AUTH_FAILED" ./tmp/vpnbook.log; then
+            echo "AUTH_FAILED detected. Please enter the password manually:"
+            read -s new_pwd  # -s makes sure the password is not displayed
+            
+            # Update the login.conf with the new password
+            echo "vpnbook" > ${vpnbook_folder}/login.conf
+            echo ${new_pwd} >> ${vpnbook_folder}/login.conf
+            
+            # Retry the connection with the new password
+            echo "Retrying connection with the new password..."
+            sudo openvpn --config ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn \
+                         --auth-user-pass ${vpnbook_folder}/login.conf \
+                         --pull --route-ipv6 2000::/3 \
+                         --dhcp-option DNS6 2001:4860:4860::8888 > ./tmp/vpnbook.log 2>&1 &
+            
+            sleep 5
+            if grep -q "AUTH_FAILED" ./tmp/vpnbook.log; then
+                echo "AUTH_FAILED again. Exiting..."
+                return 1
+            fi
+        fi
+        
+        return 0
+    else
+        echo "${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn not found"
+        return 1
+    fi
 }
 
 __connect_to_first_available(){
-	local server=$1
-	local OPENVPN_EXIT_STATUS
-	
-	if [ "${server}" != "" ]
-	then
-		# Make the original variable lowercase
-		local l_server=$(echo ${server} | tr '[:upper:]' '[:lower:]')	
-		
-		echo "Trying to Establish the Vpn Tunnel to ${server}..."
-		__connect_to ${l_server}
-		OPENVPN_EXIT_STATUS=$?
-		
-		if [ ${OPENVPN_EXIT_STATUS} -eq 0  ]; then
-			echo "Vpn Tunnel established to ${l_server}"
-			return  0
-		else
-			echo "Trying to connect to another server..."
-			# If the connection was unsuccesful, then try to connect to the first available Server
-			for i in pl134 de20 us1 uk205 ca149 fr200
-			do
-				# Just skip a reconnection to the same Server given as input
-				if [ "${i}" != "${server}" ]
-				then
-          #Logging
+    local server=$1
+    local OPENVPN_EXIT_STATUS
+    
+    if [ "${server}" != "" ]; then
+        # Attempt connection to the specified server
+        echo "Trying to Establish the Vpn Tunnel to ${server}..."
+        __connect_to ${server}
+        OPENVPN_EXIT_STATUS=$?
 
-          echo "Connecting to ${i}"
-					__connect_to ${i}
-					OPENVPN_EXIT_STATUS=$?
-					if [ ${OPENVPN_EXIT_STATUS} -eq 0  ]; then
-						return 0
-					fi
-				fi
-			done
-		fi
-		return 1
-	else 
-		echo "Method called with an empty input parameter..."
-		return 1
-	fi
+        if [ ${OPENVPN_EXIT_STATUS} -eq 0 ]; then
+            echo "Vpn Tunnel established to ${server}"
+
+            # Now check if the interface is up
+            __check_if_up ${vpnbook_if_name}
+            if [ $? -eq 1 ]; then
+                echo "VPN interface is active"
+                return 0  # Success
+            else
+                echo "VPN interface ${vpnbook_if_name} is not active"
+                return 1  # Failure, interface didn't come up
+            fi
+        else
+            echo "Failed to establish Vpn Tunnel to ${server}"
+        fi
+    else
+        echo "No server specified. Trying default servers..."
+        # Fallback to connecting to default servers
+        for i in pl134 de20 us1 uk205 ca149 fr200; do
+            echo "Connecting to ${i}..."
+            __connect_to ${i}
+            OPENVPN_EXIT_STATUS=$?
+
+            if [ ${OPENVPN_EXIT_STATUS} -eq 0 ]; then
+                echo "Vpn Tunnel established to ${i}"
+
+                # Check if the interface is up after each attempt
+                __check_if_up ${vpnbook_if_name}
+                if [ $? -eq 1 ]; then
+                    echo "VPN interface ${vpnbook_if_name} is active"
+                    return 0  # Success
+                else
+                    echo "VPN interface ${vpnbook_if_name} is not active"
+                    return 1  # Failure, interface didn't come up
+                fi
+            else
+                echo "Failed to connect to ${i}. Trying the next one..."
+            fi
+        done
+    fi
+    return 1  # Failure to establish VPN tunnel
 }
-
 __wait_for_seconds(){
 	local seconds="$@"
 	echo "waiting ${seconds} seconds before continuing..."
@@ -153,18 +187,18 @@ __wait_for_seconds(){
 }
 
 __check_if_up(){
-	__wait_for_seconds 10
-	
-	local if_id="$@"
-	local if_result=$(ifconfig ${if_id} | grep "${if_id}: flags" | cut -d \: -f1)
-	if [ "${if_result}" == "${if_id}"  ]; then
-		return 1
-	else
-		return 0
-	fi
+    __wait_for_seconds 10
+    
+    # Check for any tun interface (tun0, tun1, etc.)
+    local if_result=$(ifconfig | grep -o "tun[0-9]")
+    if [ -n "${if_result}" ]; then
+        echo "VPN interface ${if_result} is active"
+        return 1
+    else
+        echo "No tun interface found. VPN tunnel may not have been established."
+        return 0
+    fi
 }
-# End functions 
-
 # Variable Declaration
 default_dir=.
 config_file=${default_dir}/vpnbook.config
@@ -260,6 +294,11 @@ else
 		var=${server}
 	fi
 
+__check_if_up ${vpnbook_if_name}
+if [ $? -eq 1 ]; then
+    echo "VPN Tunnel already established. Nothing to do."
+    exit 0
+fi
 	echo "Starting the Vpn Tunnel"
 	# Login to sudo	
 	sudo -v
@@ -268,16 +307,13 @@ else
 	__connect_to_first_available ${var}
 	
 	# Check if the given interface is up and running
-	__check_if_up ${vpnbook_if_name}
+	# __check_if_up ${vpnbook_if_name}
 	
-	# The Tunnel is established if the interface exists
-	if [ $? -eq 1  ]; then
-		echo "Vpn Tunnel established"
-	else
-		echo "An Error has occurred while trying to Establish the Vpn Tunnel..."
-		exit_code=1
-	fi
-
+# If connection failed and the interface is not up, log an error
+if [ $? -ne 0 ]; then
+    echo "An Error has occurred while trying to Establish the Vpn Tunnel..."
+    exit 1
+fi
 	echo "Cleaning temporary Files..."
 	rm ./tmp/password-${timestamp}.json
 	
