@@ -12,24 +12,20 @@ __check_requirements(){
 	__is_installed sudo
 	__is_installed curl
 	__is_installed openvpn
+        __is_installed ifconfig
 }
 
 __check_requirements
 
-default_dir=${HOME}/.local/scripts/vpnbook_client/
-mkdir -p ${default_dir}
 
-echo "Copying Script under ${default_dir}..."
-cp vpnbook_wrapper ${default_dir}
-chmod 744 ${default_dir}/vpnbook_wrapper
-cp vpnbook.config ${default_dir}
+mkdir -p ./.vpnbook
 
-cp vpnbook ${default_dir}
-chmod 744 ${default_dir}/vpnbook
-cp vpnbook_stop ${default_dir}
-chmod 744 ${default_dir}/vpnbook_stop
-cp password_extractor ${default_dir}
-chmod 744 ${default_dir}/password_extractor
+echo "Setting Permissons"
+
+
+chmod 744 .vpnbook
+chmod 744 ./vpnbook_stop
+chmod 744 ./password_extractor
 
 echo "In order to work, the User: $USER must be part of a group called vpnstarter. Add the following lines to your sudoers configuration file..."
 echo '## Members of the Group vpnstarter can run openvpn'
