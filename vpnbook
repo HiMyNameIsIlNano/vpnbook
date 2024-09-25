@@ -10,12 +10,12 @@ __show_menu(){
     RED_TEXT=`echo "\033[31m"`
     ENTER_LINE=`echo "\033[33m"`
     echo -e "${MENU}*********************************************${NORMAL}"
-    echo -e "${MENU}**${NUMBER} 1)${MENU} Connect to PL226 ${NORMAL}"
-    echo -e "${MENU}**${NUMBER} 2)${MENU} Connect to DE4 ${NORMAL}"
-    echo -e "${MENU}**${NUMBER} 3)${MENU} Connect to US1 ${NORMAL}"
-    echo -e "${MENU}**${NUMBER} 4)${MENU} Connect to US2 ${NORMAL}"
-    echo -e "${MENU}**${NUMBER} 5)${MENU} Connect to CA222 ${NORMAL}" 
-    echo -e "${MENU}**${NUMBER} 6)${MENU} Connect to FR1 ${NORMAL}"
+    echo -e "${MENU}**${NUMBER} 1)${MENU} Connect to PL134 ${NORMAL}"
+    echo -e "${MENU}**${NUMBER} 2)${MENU} Connect to DE20 ${NORMAL}"
+    echo -e "${MENU}**${NUMBER} 3)${MENU} Connect to UK205 ${NORMAL}"
+    echo -e "${MENU}**${NUMBER} 4)${MENU} Connect to US1 ${NORMAL}"
+    echo -e "${MENU}**${NUMBER} 5)${MENU} Connect to CA149 ${NORMAL}" 
+    echo -e "${MENU}**${NUMBER} 6)${MENU} Connect to FR200 ${NORMAL}"
     echo -e "${MENU}*********************************************${NORMAL}"
     echo -e "${ENTER_LINE}Press ${RED_TEXT}any other key to exit. ${NORMAL}"
 }
