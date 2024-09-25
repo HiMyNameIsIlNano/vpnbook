@@ -1,4 +1,3 @@
-
 #!/bin/sh
 
 # Print out the help
@@ -21,11 +20,11 @@ __check_if_down(){
     local if_id="$1"
     # Check if the interface exists
     if ip link show "$if_id" >/dev/null 2>&1; then
-        # Check if the interface is down
+    
         ip link show "$if_id" | grep -q "state DOWN"
         return $?  # Returns 0 if down, 1 if not down
     else
-        return 1  # Interface does not exist
+        return 1 
     fi
 }
 
@@ -33,7 +32,7 @@ __check_if_down(){
 config_file="./vpnbook.config"  # Set this to the correct path
 vpnbook_if_name=$(__read_property vpnbook_if_name)
 
-# Debugging output to verify interface name
+
 echo "VPN Interface Name: ${vpnbook_if_name}"
 
 # Start Script
@@ -48,7 +47,7 @@ while [ "$1" != "" ]; do
     shift
 done
 
-# Check if the VPN interface is down
+
 if __check_if_down "${vpnbook_if_name}"; then
     echo "The provided interface ${vpnbook_if_name} is already down."
     exit 0
