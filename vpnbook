@@ -83,52 +83,59 @@ __check_requirements(){
 
 __connect_to() {
     local server=$1
-    local l_server=$(echo ${server} | tr '[:upper:]' '[:lower:]')
+    local l_server=$(echo "${server}" | tr '[:upper:]' '[:lower:]')
     
-    if [ -f ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn ]; then
-        echo "Trying to Establish the Vpn Tunnel to ${server}..."
+    if [ -f "${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn" ]; then
+        echo "Trying to establish the VPN tunnel to ${server}..."
         echo "Looking for file: ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn"
         
-        # Start OpenVPN in the background
-        sudo openvpn --config ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn \
-                     --auth-user-pass ${vpnbook_folder}/login.conf \
+        # Ensure log folder exists
+        mkdir -p ./tmp
+        
+        # Start OpenVPN in the background and direct output to a log file
+        sudo openvpn --config "${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn" \
+                     --auth-user-pass "${vpnbook_folder}/login.conf" \
                      --pull --route-ipv6 2000::/3 \
                      --dhcp-option DNS6 2001:4860:4860::8888 > ./tmp/vpnbook.log 2>&1 &
 
-       
-        sleep 5
-        
-        # Check for AUTH_FAILED in the OpenVPN log
+        # Capture the process ID of the OpenVPN process
+        vpn_pid=$!
+
+        # Wait for a few seconds to allow OpenVPN to attempt the connection
+        sleep 10
+
+        # Check if the process is still running and check the log for AUTH_FAILED
         if grep -q "AUTH_FAILED" ./tmp/vpnbook.log; then
             echo "AUTH_FAILED detected. Please enter the password manually:"
             read -s new_pwd  # -s makes sure the password is not displayed
-            
-           
-            echo "vpnbook" > ${vpnbook_folder}/login.conf
-            echo "${new_pwd}" >> ${vpnbook_folder}/login.conf
+
+            # Update the login.conf with the new password
+            echo "vpnbook" > "${vpnbook_folder}/login.conf"
+            echo "${new_pwd}" >> "${vpnbook_folder}/login.conf"
+
+            # Kill the previous OpenVPN process
+            sudo kill "$vpn_pid"
 
             # Retry the connection with the new password
             echo "Retrying connection with the new password..."
-            sudo openvpn --config ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn \
-                         --auth-user-pass ${vpnbook_folder}/login.conf \
+            sudo openvpn --config "${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn" \
+                         --auth-user-pass "${vpnbook_folder}/login.conf" \
                          --pull --route-ipv6 2000::/3 \
                          --dhcp-option DNS6 2001:4860:4860::8888 > ./tmp/vpnbook.log 2>&1 &
             
-    
-            sleep 5
-            if grep -q "AUTH_FAILED" ./tmp/vpnbook.log; then
-                echo "AUTH_FAILED again. Exiting..."
-                return 1
-            else
-                echo "Vpn Tunnel established to ${server} with new credentials."
-                return 0
-            fi
-        else
-            echo "Vpn Tunnel established to ${server}."
-            return 0 
+            vpn_pid=$!  # Update the PID of the new process
+            sleep 10    # Give time for the connection attempt
         fi
+
+        # Check if OpenVPN is still running
+        if ps -p "$vpn_pid" > /dev/null; then
+            echo "VPN connection established successfully."
+        else
+            echo "VPN connection failed. Please check the log at ./tmp/vpnbook.log for more details."
+        fi
+
     else
-        echo "${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn not found"
+        echo "VPN configuration file not found: ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn"
         return 1
     fi
 }
