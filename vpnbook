@@ -49,6 +49,8 @@ __zip_downloader(){
 		curl ${vpnbook_base_url}/free-openvpn-account/${base_name}-${u_country}.${ext} -o ${vpnbook_folder}/${base_name}-${u_country}.${ext} 
 		# Make the original variable uppercase					
 		unzip ${vpnbook_folder}/${base_name}-${u_country}.${ext} -d ${vpnbook_folder}/${u_country}	
+    mv ${vpnbook_folder}/${u_country}/vpnbook-openvpn-$u_country/* ${vpnbook_folder}/${u_country}
+
     mv ${vpnbook_folder}/${base_name}-${u_country}.${ext} ${vpnbook_folder}/${u_country}
 	fi
 }
@@ -82,15 +84,23 @@ __connect_to() {
 	local server=$1
 	local l_server=$(echo ${server} | tr '[:upper:]' '[:lower:]')
 	
-	if [ -f ${vpnbook_folder}/${server}/vpnbook-openvpn-${l_server}/vpnbook-${l_server}-tcp443.ovpn ]
+	if [ -f ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn ]
 	then
 		echo "Trying to Establish the Vpn Tunnel to ${i}..."
-    echo "Looking for file: ${vpnbook_folder}/${server}/vpnbook-openvpn-${l_server}/vpnbook-${l_server}-tcp443.ovpn"
-    sudo openvpn --config ${vpnbook_folder}/${server}/vpnbook-openvpn-${l_server}/vpnbook-${l_server}-tcp443.ovpn --auth-user-pass ${vpnbook_folder}/login.conf --pull --route-ipv6 2000::/3 --dhcp-option DNS6 2001:4860:4860::8888 > ./tmp/vpnbook.log &
+
+    # Logging 
+    
+    echo "Looking for file: ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn"
+    
+    sudo openvpn --config ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn --auth-user-pass ${vpnbook_folder}/login.conf --pull --route-ipv6 2000::/3 --dhcp-option DNS6 2001:4860:4860::8888 > ./tmp/vpnbook.log &
 		return 0
-	else 
-		echo "${vpnbook_folder}/${server}/vpnbook-openvpn-${l_server}/vpnbook-${l_server}-tcp443.ovpn was not found..."
-		return 1
+  elif [ ! -f ${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn ]
+  then
+    echo "${vpnbook_folder}/${server}/vpnbook-${l_server}-tcp443.ovpn not found"
+  else 
+		# echo "${vpnbook_folder}/${server}/vpnbook-openvpn-${l_server}/vpnbook-${l_server}-tcp443.ovpn was not found..."
+		echo "Some other error"
+    return 1
 	fi
 }
 
@@ -104,11 +114,11 @@ __connect_to_first_available(){
 		local l_server=$(echo ${server} | tr '[:upper:]' '[:lower:]')	
 		
 		echo "Trying to Establish the Vpn Tunnel to ${server}..."
-		__connect_to ${server}
+		__connect_to ${l_server}
 		OPENVPN_EXIT_STATUS=$?
 		
 		if [ ${OPENVPN_EXIT_STATUS} -eq 0  ]; then
-			echo "Vpn Tunnel established"
+			echo "Vpn Tunnel established to ${l_server}"
 			return  0
 		else
 			echo "Trying to connect to another server..."
@@ -118,6 +128,9 @@ __connect_to_first_available(){
 				# Just skip a reconnection to the same Server given as input
 				if [ "${i}" != "${server}" ]
 				then
+          #Logging
+
+          echo "Connecting to ${i}"
 					__connect_to ${i}
 					OPENVPN_EXIT_STATUS=$?
 					if [ ${OPENVPN_EXIT_STATUS} -eq 0  ]; then
@@ -235,7 +248,7 @@ else
 		read opt
 		
 		case $opt in
-		1) var=pl34;;
+		1) var=pl134;;
 		2) var=de20;;
 		3) var=us1;;
 		4) var=uk205;;
