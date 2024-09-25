@@ -106,7 +106,7 @@ __connect_to() {
 
         # Check if the process is still running and check the log for AUTH_FAILED
         if grep -q "AUTH_FAILED" ./tmp/vpnbook.log; then
-            echo "AUTH_FAILED detected. Please enter the password manually:"
+            echo "AUTH_FAILED detected. Please enter the password manually(check https://www.vpnbook.com/freevpn):"
             read -s new_pwd  # -s makes sure the password is not displayed
 
             # Update the login.conf with the new password
