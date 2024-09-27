@@ -55,6 +55,15 @@ __zip_downloader(){
 	fi
 }
 
+#__is_user_allowed_to_vpn(){
+#	local group=$(id -G -n $USER | grep -o "vpnstarter")
+#	if [ "${group}" == "vpnstarter" ]; then
+#		echo "The user is part of the vpnstarter Group"
+#	else
+#		echo "The user is not part of the vpnstarter Group. Please Fix the issue first and then retry."
+#		exit 1
+#	fi
+#}
 
 __is_installed(){
 	if ! [ -x "$(command -v $1)" ]; then
@@ -68,6 +77,7 @@ __check_requirements(){
 	__is_installed sudo
 	__is_installed curl
 	__is_installed openvpn
+#	__is_user_allowed_to_vpn
 }
 
 
@@ -158,13 +168,13 @@ __connect_to_first_available(){
     else
         echo "No server specified. Trying default servers..."
        
-        for i in pl134 de20 us1 uk205 ca149 fr200; do
-            echo "Connecting to ${i}..."
-            __connect_to ${i}
+        for server_i in pl134 de20 us1 uk205 ca149 fr200; do
+            echo "Connecting to ${server_i}..."
+            __connect_to ${server_i}
             OPENVPN_EXIT_STATUS=$?
 
             if [ ${OPENVPN_EXIT_STATUS} -eq 0 ]; then
-                echo "Vpn Tunnel established to ${i}"
+                echo "Vpn Tunnel established to ${server_i}"
 
                 
                 __check_if_up ${vpnbook_if_name}
@@ -176,7 +186,7 @@ __connect_to_first_available(){
                     return 1  # Failure, interface didn't come up
                 fi
             else
-                echo "Failed to connect to ${i}. Trying the next one..."
+                echo "Failed to connect to ${server_i}. Trying the next one..."
             fi
         done
     fi
@@ -262,9 +272,9 @@ then
 else
 	mkdir -p ${vpnbook_folder} 	
 	
-	for i in pl134 de20 us1 uk205 ca149 fr200 
+	for zip_i in pl134 de20 us1 uk205 ca149 fr200 
 	do
-		__zip_downloader ${i}
+		__zip_downloader ${zip_i}
 	done
 	 	
 	echo "Password retrieved from server: ${pwd}"
