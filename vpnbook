@@ -55,15 +55,6 @@ __zip_downloader(){
 	fi
 }
 
-#__is_user_allowed_to_vpn(){
-#	local group=$(id -G -n $USER | grep -o "vpnstarter")
-#	if [ "${group}" == "vpnstarter" ]; then
-#		echo "The user is part of the vpnstarter Group"
-#	else
-#		echo "The user is not part of the vpnstarter Group. Please Fix the issue first and then retry."
-#		exit 1
-#	fi
-#}
 
 __is_installed(){
 	if ! [ -x "$(command -v $1)" ]; then
@@ -77,7 +68,6 @@ __check_requirements(){
 	__is_installed sudo
 	__is_installed curl
 	__is_installed openvpn
-#	__is_user_allowed_to_vpn
 }
 
 
