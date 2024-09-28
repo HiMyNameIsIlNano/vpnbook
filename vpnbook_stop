@@ -6,30 +6,34 @@ __usage(){
 }
 
 __read_property(){
-	input="$@"
-	if [ ! -f ${config_file} ]; then
-		echo "${config_file} does not exist... Aborting..."
-		exit 1
-	else
-		temp=`cat $config_file | sed 's/\"//g' | grep -w $input | cut -d ":" -f2`
-		echo ${temp##*|}
-	fi
+    input="$1"
+    if [ ! -f "${config_file}" ]; then
+        echo "${config_file} does not exist... Aborting..."
+        exit 1
+    else
+        temp=$(grep -w "${input}" "${config_file}" | cut -d ":" -f2 | tr -d '" ')
+        echo "$temp"
+    fi
 }
 
-__check_if_up(){
-	__wait_for_seconds 10
-
-	local if_id="$@"
-	local if_result=$(ifconfig ${if_id} | grep "${if_id}: flags" | cut -d \: -f1)
-	if [ "${if_result}" == "${if_id}"  ]; then
-		return 1
-	else
-		return 0
-	fi
+__check_if_down(){
+    local if_id="$1"
+    # Check if the interface exists
+    if ip link show "$if_id" >/dev/null 2>&1; then
+    
+        ip link show "$if_id" | grep -q "state DOWN"
+        return $?  # Returns 0 if down, 1 if not down
+    else
+        return 1 
+    fi
 }
-# End functions
 
+# Variable Declaration
+config_file="./vpnbook.config"  # Set this to the correct path
 vpnbook_if_name=$(__read_property vpnbook_if_name)
+
+
+echo "VPN Interface Name: ${vpnbook_if_name}"
 
 # Start Script
 while [ "$1" != "" ]; do
@@ -43,15 +47,15 @@ while [ "$1" != "" ]; do
     shift
 done
 
-__check_if_up ${vpnbook_if_name}
 
-# The Tunnel is established if the interface exists
-if [ $? -eq 1  ]; then
-    ifconfig ${vpnbook_if_name} down
-    /etc/rc.d/netif restart
-    exit 0;
+if __check_if_down "${vpnbook_if_name}"; then
+    echo "The provided interface ${vpnbook_if_name} is already down."
+    exit 0
 else
-    echo "The provided interface ${vpnbook_if_name} does not exist..."
-    exit 1;
+    echo "Stopping VPN interface ${vpnbook_if_name}..."
+    sudo ip link set "${vpnbook_if_name}" down
+    
+    sudo pkill openvpn
+    echo "VPN interface ${vpnbook_if_name} has been stopped."
+    exit 0
 fi
-
